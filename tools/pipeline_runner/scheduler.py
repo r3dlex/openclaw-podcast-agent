@@ -37,11 +37,11 @@ logger = logging.getLogger(__name__)
 # Sentinel for graceful shutdown
 _shutdown = False
 
-# State file to track last run times (survives restarts via Docker volume)
-_STATE_FILE = Path("log/scheduler_state.json")
-
 # Shared state dict — loaded once at startup, updated on each run
 _run_state: dict[str, str] = {}
+
+# State file path — set dynamically from settings in run_scheduler()
+_state_file: Path = Path("log/scheduler_state.json")
 
 
 @dataclass
@@ -56,8 +56,8 @@ class ScheduledTask:
 def _load_state() -> dict[str, str]:
     """Load last-run timestamps from state file."""
     try:
-        if _STATE_FILE.exists():
-            data: dict[str, str] = json.loads(_STATE_FILE.read_text(encoding="utf-8"))
+        if _state_file.exists():
+            data: dict[str, str] = json.loads(_state_file.read_text(encoding="utf-8"))
             return data
     except Exception:
         logger.warning("Could not load scheduler state, starting fresh")
@@ -67,8 +67,8 @@ def _load_state() -> dict[str, str]:
 def _save_state(state: dict[str, str]) -> None:
     """Persist last-run timestamps to state file."""
     try:
-        _STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-        _STATE_FILE.write_text(json.dumps(state, indent=2), encoding="utf-8")
+        _state_file.parent.mkdir(parents=True, exist_ok=True)
+        _state_file.write_text(json.dumps(state, indent=2), encoding="utf-8")
     except Exception:
         logger.warning("Could not save scheduler state", exc_info=True)
 
@@ -143,9 +143,12 @@ def register_schedule(settings: PodcastSettings) -> list[ScheduledTask]:
 
 def run_scheduler(settings: PodcastSettings | None = None) -> None:
     """Start the scheduler loop. Blocks until SIGTERM/SIGINT."""
-    global _shutdown, _run_state
+    global _shutdown, _run_state, _state_file
 
     settings = settings or PodcastSettings()
+
+    # Resolve state file relative to PODCAST_DATA_DIR
+    _state_file = settings.log_dir / "scheduler_state.json"
 
     signal.signal(signal.SIGTERM, _handle_signal)
     signal.signal(signal.SIGINT, _handle_signal)

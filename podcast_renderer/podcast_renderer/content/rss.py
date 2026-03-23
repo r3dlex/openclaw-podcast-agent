@@ -43,7 +43,12 @@ class RSSGenerationStep:
             dist = {"rss_file": "output/feed.xml"}
             podcast_meta = {}
 
-        rss_path = Path(dist.get("rss_file", "output/feed.xml"))
+        # Resolve rss_file relative to podcast_data_dir
+        rss_rel = dist.get("rss_file", "output/feed.xml")
+        rss_path = Path(rss_rel)
+        if not rss_path.is_absolute():
+            data_dir = getattr(settings, "podcast_data_dir", Path("."))
+            rss_path = Path(data_dir) / rss_rel
         rss_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Build the episode item XML
