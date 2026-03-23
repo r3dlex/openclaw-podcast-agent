@@ -46,6 +46,15 @@ Protocol: see `openclaw-inter-agent-message-queue/spec/PROTOCOL.md`.
 - [x] **Check episode generation status** — if a long-running production
   is in progress, check if it completed or failed
 
+## Report to User
+
+After completing all checks above, **send a summary to the user via your messaging channel** (Telegram through OpenClaw gateway). The user cannot see IAMQ messages.
+
+- If you processed production requests or episodes are in progress: summarize what happened.
+  Example: "Heartbeat: episode '[title]' in production — TTS at 80%. Should be ready in ~3 min."
+- If nothing happened: "No pending episodes. Standing by for production requests."
+- TTS failures, Ollama timeouts, audio errors: report IMMEDIATELY, don't wait for the heartbeat summary.
+
 ## Rules
 
 - MQ replies go through `POST /send` with `replyTo`
