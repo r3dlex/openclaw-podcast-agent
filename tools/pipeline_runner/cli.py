@@ -60,7 +60,9 @@ def main() -> None:
     script_parser = subparsers.add_parser("generate-script", help="Generate podcast script")
     script_parser.add_argument("--topics", required=False, help="Comma-separated topics")
     script_parser.add_argument("--script-file", required=False, help="Path to manual script file")
-    script_parser.add_argument("--lang", default=None, help="Language code (default: all configured)")
+    script_parser.add_argument(
+        "--lang", default=None, help="Language code (default: all configured)"
+    )
 
     # generate-episode
     episode_parser = subparsers.add_parser("generate-episode", help="Full episode pipeline")

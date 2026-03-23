@@ -5,9 +5,10 @@ Steps: AudioCleanupStep -> LoudnessNormStep
 
 from __future__ import annotations
 
-from pipeline_runner.runner import Pipeline
 from podcast_renderer.audio.cleanup import AudioCleanupStep
 from podcast_renderer.audio.loudness import LoudnessNormStep
+
+from pipeline_runner.runner import Pipeline
 
 
 def build_cleanup_pipeline() -> Pipeline:

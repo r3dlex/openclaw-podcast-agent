@@ -30,7 +30,6 @@ class AudioCleanupStep:
         return "raw_episode_audio" in context and not context.get("skip_cleanup", False)
 
     def execute(self, context: dict[str, Any]) -> dict[str, Any]:
-        settings = context.get("settings")
         input_path = Path(context["raw_episode_audio"])
 
         output_path = input_path.parent / "clean_episode.wav"
@@ -38,11 +37,15 @@ class AudioCleanupStep:
         # Audio filter chain: highpass -> lowpass -> fft denoise
         filter_chain = "highpass=f=80,lowpass=f=12000,afftdn=nf=-20"
 
-        run_ffmpeg([
-            "-i", str(input_path),
-            "-af", filter_chain,
-            str(output_path),
-        ])
+        run_ffmpeg(
+            [
+                "-i",
+                str(input_path),
+                "-af",
+                filter_chain,
+                str(output_path),
+            ]
+        )
 
         context["clean_episode_audio"] = output_path
         logger.info("Audio cleaned: %s -> %s", input_path.name, output_path.name)

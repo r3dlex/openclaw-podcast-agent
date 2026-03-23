@@ -51,9 +51,7 @@ class EpisodeAssemblyStep:
         # If intro/outro exist, concatenate them
         if intro_audio and Path(intro_audio).exists():
             assembled = output_dir / "assembled.wav"
-            self._assemble_with_parts(
-                normalized, assembled, intro_audio, outro_audio
-            )
+            self._assemble_with_parts(normalized, assembled, intro_audio, outro_audio)
             source_wav = assembled
         else:
             source_wav = normalized
@@ -64,12 +62,17 @@ class EpisodeAssemblyStep:
 
         # Export MP3
         mp3_path = output_dir / f"{episode_id}_{lang}.mp3"
-        run_ffmpeg([
-            "-i", str(source_wav),
-            "-codec:a", "libmp3lame",
-            "-b:a", f"{mp3_bitrate}k",
-            str(mp3_path),
-        ])
+        run_ffmpeg(
+            [
+                "-i",
+                str(source_wav),
+                "-codec:a",
+                "libmp3lame",
+                "-b:a",
+                f"{mp3_bitrate}k",
+                str(mp3_path),
+            ]
+        )
 
         context["episode_wav"] = wav_path
         context["episode_mp3"] = mp3_path
@@ -103,10 +106,16 @@ class EpisodeAssemblyStep:
                 escaped = part.replace("'", "'\\''")
                 f.write(f"file '{escaped}'\n")
 
-        run_ffmpeg([
-            "-f", "concat",
-            "-safe", "0",
-            "-i", str(list_file),
-            "-c", "copy",
-            str(output),
-        ])
+        run_ffmpeg(
+            [
+                "-f",
+                "concat",
+                "-safe",
+                "0",
+                "-i",
+                str(list_file),
+                "-c",
+                "copy",
+                str(output),
+            ]
+        )

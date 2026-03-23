@@ -130,9 +130,7 @@ def register_schedule(settings: PodcastSettings) -> list[ScheduledTask]:
     tasks: list[ScheduledTask] = []
 
     # Monday 06:00 — Weekly episode generation
-    schedule.every().monday.at("06:00").do(
-        _guarded_run, "weekly_episode", _run_episode, settings
-    )
+    schedule.every().monday.at("06:00").do(_guarded_run, "weekly_episode", _run_episode, settings)
     tasks.append(ScheduledTask("Weekly episode", "monday 06:00", "generate_episode"))
 
     # Note: IAMQ registration and heartbeats are handled by the IAMQ sidecar

@@ -37,19 +37,18 @@ class ChapterMarkerStep:
             text = segment.get("text", "")
 
             # Use notes as chapter title, or first ~50 chars of text
-            if notes:
-                title = notes.capitalize()
-            else:
-                title = text[:50] + "..." if len(text) > 50 else text
+            title = notes.capitalize() if notes else (text[:50] + "..." if len(text) > 50 else text)
 
             # Try to get timestamp from transcript if available
             if transcript_segments and i < len(transcript_segments):
                 current_time = float(transcript_segments[i].get("start", current_time))
 
-            chapters.append({
-                "start_time": current_time,
-                "title": title,
-            })
+            chapters.append(
+                {
+                    "start_time": current_time,
+                    "title": title,
+                }
+            )
 
             # Estimate duration from transcript or fallback
             if transcript_segments and i < len(transcript_segments):

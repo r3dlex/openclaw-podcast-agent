@@ -16,7 +16,6 @@ from pipeline_runner.pipelines.cleanup import build_cleanup_pipeline
 from pipeline_runner.pipelines.distribute import build_distribute_pipeline
 from pipeline_runner.pipelines.script import build_script_pipeline
 from pipeline_runner.pipelines.voice import build_voice_pipeline
-from pipeline_runner.runner import PipelineResult
 
 logger = logging.getLogger(__name__)
 
@@ -51,10 +50,7 @@ def run_episode_pipeline(
     episode_id = datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S")
 
     # Determine languages to process
-    if langs:
-        language_codes = [l.strip() for l in langs.split(",")]
-    else:
-        language_codes = config.language_codes
+    language_codes = [lang.strip() for lang in langs.split(",")] if langs else config.language_codes
 
     summaries: list[str] = []
 

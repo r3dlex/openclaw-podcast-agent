@@ -26,7 +26,7 @@ AGENT_METADATA: dict[str, Any] = {
     "agent_id": AGENT_ID,
     "name": "Podcaster",
     "emoji": "\U0001f399",
-    "description": "Podcast production: script generation, TTS synthesis, audio processing, distribution",
+    "description": "Podcast production: script generation, TTS, audio, distribution",
     "capabilities": [
         "script_generation",
         "voice_synthesis",

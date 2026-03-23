@@ -9,10 +9,11 @@ import json
 from pathlib import Path
 from typing import Any
 
-from pipeline_runner.config import PodcastSettings
-from pipeline_runner.runner import Pipeline
 from podcast_renderer.content.segment import TextSegmentationStep
 from podcast_renderer.llm.script import ScriptGenerationStep
+
+from pipeline_runner.config import PodcastSettings
+from pipeline_runner.runner import Pipeline
 
 
 def build_script_pipeline() -> Pipeline:

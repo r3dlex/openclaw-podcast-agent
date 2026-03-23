@@ -23,17 +23,11 @@ class TranscribeStep:
     name = "transcribe"
 
     def should_run(self, context: dict[str, Any]) -> bool:
-        return (
-            "episode_mp3" in context
-            or "episode_wav" in context
-            or "input_audio" in context
-        )
+        return "episode_mp3" in context or "episode_wav" in context or "input_audio" in context
 
     def execute(self, context: dict[str, Any]) -> dict[str, Any]:
         audio_path = Path(
-            context.get("episode_mp3")
-            or context.get("episode_wav")
-            or context["input_audio"]
+            context.get("episode_mp3") or context.get("episode_wav") or context["input_audio"]
         )
 
         try:

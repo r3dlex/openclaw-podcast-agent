@@ -10,15 +10,14 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
+# Re-export PodcastConfig from its new canonical location
+from podcast_renderer.config import PodcastConfig
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
-# Re-export PodcastConfig from its new canonical location
-from podcast_renderer.config import PodcastConfig
-
 _log = logging.getLogger(__name__)
 
-__all__ = ["PodcastSettings", "PodcastConfig"]
+__all__ = ["PodcastConfig", "PodcastSettings"]
 
 
 class PodcastSettings(BaseSettings):
@@ -37,9 +36,7 @@ class PodcastSettings(BaseSettings):
     iamq_agent_id: str = Field(default="podcast_agent", alias="IAMQ_AGENT_ID")
 
     # LLM (MiniMax via Anthropic-compatible API)
-    llm_base_url: str = Field(
-        default="https://api.minimax.io/anthropic", alias="LLM_BASE_URL"
-    )
+    llm_base_url: str = Field(default="https://api.minimax.io/anthropic", alias="LLM_BASE_URL")
     llm_api_key: str = Field(default="", alias="LLM_API_KEY")
     llm_model: str = Field(default="MiniMax-M2.7", alias="LLM_MODEL")
 

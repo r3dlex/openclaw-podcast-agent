@@ -109,9 +109,7 @@ class RSSGenerationStep:
 
         return item
 
-    def _build_feed(
-        self, podcast_meta: dict[str, Any], items: list[ET.Element]
-    ) -> ET.Element:
+    def _build_feed(self, podcast_meta: dict[str, Any], items: list[ET.Element]) -> ET.Element:
         """Build a new RSS feed from scratch."""
         rss = ET.Element("rss", version="2.0")
         rss.set("xmlns:itunes", "http://www.itunes.com/dtds/podcast-1.0.dtd")

@@ -58,7 +58,7 @@ class ScriptGenerationStep:
 
     def execute(self, context: dict[str, Any]) -> dict[str, Any]:
         # Manual script passthrough
-        if "manual_script" in context and context["manual_script"]:
+        if context.get("manual_script"):
             script = self._parse_manual_script(context["manual_script"], context)
             context["script"] = script
             logger.info("Using manual script: %s", script.get("title", "untitled"))
@@ -124,7 +124,7 @@ class ScriptGenerationStep:
         cleaned = text.strip()
         if cleaned.startswith("```"):
             lines = cleaned.split("\n")
-            lines = [l for l in lines if not l.strip().startswith("```")]
+            lines = [line for line in lines if not line.strip().startswith("```")]
             cleaned = "\n".join(lines)
 
         try:
@@ -137,9 +137,7 @@ class ScriptGenerationStep:
             logger.warning("Failed to parse LLM response as JSON: %s", text[:200])
             return None
 
-    def _parse_manual_script(
-        self, script_text: str, context: dict[str, Any]
-    ) -> dict[str, Any]:
+    def _parse_manual_script(self, script_text: str, context: dict[str, Any]) -> dict[str, Any]:
         """Parse a manual script — either JSON or plain text."""
         language = context.get("language", "en")
 
@@ -153,10 +151,7 @@ class ScriptGenerationStep:
 
         # Plain text: split into paragraphs as segments
         paragraphs = [p.strip() for p in script_text.split("\n\n") if p.strip()]
-        segments = [
-            {"speaker": "host", "text": para, "notes": ""}
-            for para in paragraphs
-        ]
+        segments = [{"speaker": "host", "text": para, "notes": ""} for para in paragraphs]
 
         return {
             "title": paragraphs[0][:80] if paragraphs else "Untitled",

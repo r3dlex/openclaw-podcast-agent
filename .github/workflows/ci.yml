@@ -164,7 +164,7 @@ jobs:
 
       - name: Validate podcast.json structure
         run: |
-          python3 -c "
+          python3 << 'PYEOF'
           import json, sys
           d = json.load(open('config/podcast.json'))
           required = ['languages', 'tts', 'audio', 'llm']
@@ -173,12 +173,12 @@ jobs:
               print(f'::error::podcast.json missing keys: {missing}')
               sys.exit(1)
           langs = len(d['languages'])
-          print(f'OK: podcast.json has {langs} language(s) and all required keys ({", ".join(required)})')
-          "
+          print(f'OK: podcast.json has {langs} language(s) and all required keys')
+          PYEOF
 
       - name: Validate .env.example has all required vars
         run: |
-          REQUIRED="PODCAST_DATA_DIR PODCAST_CONFIG_FILE IAMQ_HTTP_URL OLLAMA_BASE_URL"
+          REQUIRED="PODCAST_DATA_DIR PODCAST_CONFIG_FILE IAMQ_HTTP_URL LLM_BASE_URL"
           for var in $REQUIRED; do
             if ! grep -q "^${var}=" .env.example; then
               echo "::error::Missing required variable $var in .env.example"

@@ -34,9 +34,7 @@ class LoudnessNormStep:
 
     def execute(self, context: dict[str, Any]) -> dict[str, Any]:
         settings = context.get("settings")
-        input_path = Path(
-            context.get("clean_episode_audio") or context["raw_episode_audio"]
-        )
+        input_path = Path(context.get("clean_episode_audio") or context["raw_episode_audio"])
 
         # Get loudness targets from config
         try:
@@ -70,9 +68,12 @@ class LoudnessNormStep:
         """Pass 1: Measure loudness statistics."""
         result = run_ffmpeg(
             [
-                "-i", str(input_path),
-                "-af", f"loudnorm=I={target_lufs}:TP={target_tp}:LRA=11:print_format=json",
-                "-f", "null",
+                "-i",
+                str(input_path),
+                "-af",
+                f"loudnorm=I={target_lufs}:TP={target_tp}:LRA=11:print_format=json",
+                "-f",
+                "null",
                 "-",
             ],
             check=True,
@@ -113,8 +114,12 @@ class LoudnessNormStep:
             # Single-pass fallback
             filter_str = f"loudnorm=I={target_lufs}:TP={target_tp}:LRA=11"
 
-        run_ffmpeg([
-            "-i", str(input_path),
-            "-af", filter_str,
-            str(output_path),
-        ])
+        run_ffmpeg(
+            [
+                "-i",
+                str(input_path),
+                "-af",
+                filter_str,
+                str(output_path),
+            ]
+        )

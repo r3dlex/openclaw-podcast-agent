@@ -90,12 +90,17 @@ def run_ffprobe(
 
 def get_audio_duration(audio_path: Path) -> float:
     """Get duration of an audio file in seconds."""
-    result = run_ffprobe([
-        "-v", "quiet",
-        "-show_entries", "format=duration",
-        "-of", "default=noprint_wrappers=1:nokey=1",
-        str(audio_path),
-    ])
+    result = run_ffprobe(
+        [
+            "-v",
+            "quiet",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
+            str(audio_path),
+        ]
+    )
     return float(result.stdout.strip())
 
 
@@ -117,12 +122,19 @@ def convert_reference_audio(
     Returns:
         Path to the converted file.
     """
-    run_ffmpeg([
-        "-i", str(input_path),
-        "-ac", "1",
-        "-ar", str(sample_rate),
-        "-sample_fmt", "s16",
-        "-t", str(max_duration),
-        str(output_path),
-    ])
+    run_ffmpeg(
+        [
+            "-i",
+            str(input_path),
+            "-ac",
+            "1",
+            "-ar",
+            str(sample_rate),
+            "-sample_fmt",
+            "s16",
+            "-t",
+            str(max_duration),
+            str(output_path),
+        ]
+    )
     return output_path

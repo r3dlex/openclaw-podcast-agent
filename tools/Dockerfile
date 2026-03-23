@@ -10,19 +10,19 @@ RUN apt-get update && \
     poetry config virtualenvs.create false
 
 # Install podcast_renderer first (dependency)
-COPY ../podcast_renderer/pyproject.toml /app/podcast_renderer/pyproject.toml
-COPY ../podcast_renderer/podcast_renderer/ /app/podcast_renderer/podcast_renderer/
-COPY ../podcast_renderer/README.md /app/podcast_renderer/README.md
+COPY podcast_renderer/pyproject.toml /app/podcast_renderer/pyproject.toml
+COPY podcast_renderer/podcast_renderer/ /app/podcast_renderer/podcast_renderer/
+COPY podcast_renderer/README.md /app/podcast_renderer/README.md
 RUN cd /app/podcast_renderer && poetry install --only main --no-interaction
 
 # Copy pipeline_runner dependency files (Docker cache layer)
-COPY pyproject.toml ./
+COPY tools/pyproject.toml ./
 
 # Install production dependencies
 RUN poetry install --only main --no-root --no-interaction
 
 # Copy source
-COPY pipeline_runner/ pipeline_runner/
+COPY tools/pipeline_runner/ pipeline_runner/
 
 # Install the package itself
 RUN poetry install --only main --no-interaction
@@ -32,7 +32,7 @@ FROM base AS test
 
 RUN poetry install --no-interaction
 
-COPY tests/ tests/
+COPY tools/tests/ tests/
 
 CMD ["sh", "-c", "python -m pytest tests/ -v --tb=short && python -m ruff check pipeline_runner/"]
 

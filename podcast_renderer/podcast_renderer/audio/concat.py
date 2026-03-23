@@ -50,13 +50,19 @@ class ConcatenateStep:
 
         # Concatenate using ffmpeg concat demuxer
         output_path = output_dir / "raw_episode.wav"
-        run_ffmpeg([
-            "-f", "concat",
-            "-safe", "0",
-            "-i", str(list_file),
-            "-c", "copy",
-            str(output_path),
-        ])
+        run_ffmpeg(
+            [
+                "-f",
+                "concat",
+                "-safe",
+                "0",
+                "-i",
+                str(list_file),
+                "-c",
+                "copy",
+                str(output_path),
+            ]
+        )
 
         context["raw_episode_audio"] = output_path
         logger.info(

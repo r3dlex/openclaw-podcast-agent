@@ -8,7 +8,8 @@ services:
   #         docker compose exec scheduler pipeline generate-episode --topics "..."
   scheduler:
     build:
-      context: ./tools
+      context: .
+      dockerfile: tools/Dockerfile
       target: production
     env_file: .env
     environment:
@@ -39,7 +40,8 @@ services:
   #   docker compose run --rm pipeline validate
   pipeline:
     build:
-      context: ./tools
+      context: .
+      dockerfile: tools/Dockerfile
       target: production
     env_file: .env
     environment:
@@ -73,7 +75,8 @@ services:
   #   docker compose run --rm pipeline-test
   pipeline-test:
     build:
-      context: ./tools
+      context: .
+      dockerfile: tools/Dockerfile
       target: test
     env_file: .env
     volumes:
