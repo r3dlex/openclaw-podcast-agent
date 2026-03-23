@@ -1,8 +1,8 @@
-"""Telegram notification step — send pipeline output to a Telegram chat.
+"""IAMQ notification step — announce pipeline results to other agents.
 
-Sends the generated content (episode summary, status updates) to a configured
-Telegram bot chat. Credentials are resolved from ~/.openclaw/openclaw.json
-via the agent's binding (agentId -> accountId -> botToken + chatId).
+User-facing notifications (Telegram, WhatsApp) are handled by the OpenClaw
+gateway. This step sends pipeline results to the IAMQ so sibling agents
+(Librarian, Main) are informed. Gracefully degrades when IAMQ is down.
 """
 
 from __future__ import annotations
@@ -16,73 +16,57 @@ from pipeline_runner.config import PodcastSettings
 
 logger = logging.getLogger(__name__)
 
-# Telegram message length limit
-MAX_MESSAGE_LENGTH = 4096
 
+class IAMQNotifyStep:
+    """Announce pipeline completion via IAMQ.
 
-class TelegramNotifyStep:
-    """Send pipeline output to Telegram.
-
-    Context in:  episode_summary or content (str)
-    Context out: telegram_sent (bool), telegram_message_id (int | None)
+    Context in:  episode_summary or content (str), pipeline_name
+    Context out: iamq_notified (bool), iamq_message_id (str | None)
     """
 
-    name = "telegram_notify"
+    name = "iamq_notify"
 
     def should_run(self, context: dict[str, Any]) -> bool:
         settings: PodcastSettings = context.get("settings", PodcastSettings())
-        if not settings.telegram_bot_token or not settings.telegram_chat_id:
-            logger.debug("Telegram not configured, skipping notification")
+        if not settings.iamq_http_url:
             return False
         return "episode_summary" in context or "content" in context
 
     def execute(self, context: dict[str, Any]) -> dict[str, Any]:
         settings: PodcastSettings = context.get("settings", PodcastSettings())
-
+        pipeline_name = context.get("pipeline_name", "unknown")
         content = context.get("episode_summary") or context.get("content", "")
 
         if not content:
-            logger.warning("No content to send to Telegram")
-            context["telegram_sent"] = False
-            context["telegram_message_id"] = None
+            context["iamq_notified"] = False
+            context["iamq_message_id"] = None
             return context
 
-        pipeline_name = context.get("pipeline_name", "unknown")
-
-        # Truncate if needed (Telegram limit is 4096 chars)
-        if len(content) > MAX_MESSAGE_LENGTH:
-            truncated = content[: MAX_MESSAGE_LENGTH - 100]
-            content = truncated + f"\n\n... (truncated, full report in log/{pipeline_name})"
-
-        url = f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendMessage"
         payload = {
-            "chat_id": settings.telegram_chat_id,
-            "text": content,
-            "parse_mode": "Markdown",
-            "disable_web_page_preview": True,
+            "from": settings.iamq_agent_id,
+            "to": "librarian_agent",
+            "type": "info",
+            "priority": "NORMAL",
+            "subject": f"Podcast episode: {pipeline_name}",
+            "body": content,
         }
 
         try:
-            response = requests.post(url, json=payload, timeout=settings.request_timeout)
-            response.raise_for_status()
-            result = response.json()
-
-            if result.get("ok"):
-                message_id = result.get("result", {}).get("message_id")
-                context["telegram_sent"] = True
-                context["telegram_message_id"] = message_id
-                logger.info(
-                    "Telegram notification sent for %s (message_id=%s)",
-                    pipeline_name,
-                    message_id,
-                )
-            else:
-                context["telegram_sent"] = False
-                context["telegram_message_id"] = None
-                logger.error("Telegram API error: %s", result.get("description", "unknown"))
+            url = f"{settings.iamq_http_url}/send"
+            resp = requests.post(url, json=payload, timeout=settings.request_timeout)
+            resp.raise_for_status()
+            data = resp.json()
+            msg_id = data.get("id", data.get("message_id"))
+            context["iamq_notified"] = True
+            context["iamq_message_id"] = msg_id
+            logger.info("IAMQ: announced '%s' (id=%s)", pipeline_name, msg_id)
+        except requests.ConnectionError:
+            logger.warning("IAMQ: service unreachable at %s — skipping", settings.iamq_http_url)
+            context["iamq_notified"] = False
+            context["iamq_message_id"] = None
         except Exception:
-            context["telegram_sent"] = False
-            context["telegram_message_id"] = None
-            logger.exception("Failed to send Telegram notification")
+            logger.warning("IAMQ: announce failed", exc_info=True)
+            context["iamq_notified"] = False
+            context["iamq_message_id"] = None
 
         return context
