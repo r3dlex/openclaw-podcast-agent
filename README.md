@@ -1,2 +1,55 @@
 # openclaw-podcast-agent
-Openclaw Podcast Agent to generate podcasts
+
+Autonomous podcast production agent for the OpenClaw ecosystem. Generates podcast episodes from topics or scripts using Apple Silicon MLX-based TTS, with audio cleanup, transcription, and RSS distribution.
+
+## Features
+
+- **Script generation** via local LLM (Ollama) or manual input
+- **Dual TTS engines**: mlx-audio (Qwen3-TTS) and f5-tts-mlx, switchable via config
+- **Configurable multilingual** episode production with per-language voice references
+- **Audio cleanup** and loudness normalization (-16 LUFS / -1.0 dBTP)
+- **Transcription** via mlx-whisper with chapter markers and show notes
+- **RSS distribution** with Podcast 2.0 support
+- **IAMQ integration** for inter-agent communication
+- **Zero-install** Docker containers for all non-MLX processing
+
+## Quick Start
+
+```bash
+# 1. Configure
+cp .env.example .env
+# Edit .env with your settings
+
+# 2. Add voice reference
+# Place a 10-15s WAV recording in references/en_voice.wav
+
+# 3. Start scheduler
+docker compose up -d scheduler
+
+# 4. Generate an episode
+docker compose exec scheduler pipeline generate-episode --topics "AI news" --lang en
+
+# 5. Or generate a script only
+docker compose exec scheduler pipeline generate-script --topics "AI safety"
+```
+
+## Architecture
+
+Five-stage composable pipeline:
+1. **Script** — Generate podcast script from topics via Ollama (or manual input)
+2. **Voice** — Synthesize speech via MLX TTS with voice cloning
+3. **Cleanup** — Denoise, filter, and normalize audio via ffmpeg
+4. **Assembly** — Combine intro/voice/outro, export MP3 + WAV
+5. **Distribute** — Transcribe, generate show notes, update RSS, notify
+
+See `CLAUDE.md` for the full developer guide and `spec/ARCHITECTURE.md` for system design.
+
+## Requirements
+
+- Docker (for pipeline engine, ffmpeg, scheduling)
+- Apple Silicon Mac (for MLX TTS and transcription)
+- Ollama (optional, for script generation)
+
+## License
+
+MIT

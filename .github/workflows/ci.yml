@@ -1,0 +1,188 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  pipeline-lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: pip install "poetry>=1.8,<1.9"
+
+      - name: Cache Poetry virtualenv
+        uses: actions/cache@v4
+        with:
+          path: tools/.venv
+          key: "poetry-${{ runner.os }}-3.12-${{ hashFiles('tools/poetry.lock') }}"
+          restore-keys: "poetry-${{ runner.os }}-3.12-"
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Ruff lint
+        run: poetry run ruff check pipeline_runner/
+
+      - name: Ruff format check
+        run: poetry run ruff format --check pipeline_runner/
+
+      - name: Mypy type check
+        run: poetry run mypy pipeline_runner/
+
+  pipeline-test:
+    name: Pipeline Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Poetry
+        run: pip install "poetry>=1.8,<1.9"
+
+      - name: Cache Poetry virtualenv
+        uses: actions/cache@v4
+        with:
+          path: tools/.venv
+          key: "poetry-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('tools/poetry.lock') }}"
+          restore-keys: "poetry-${{ runner.os }}-${{ matrix.python-version }}-"
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Run unit tests with coverage
+        run: poetry run pytest tests/ -v --tb=short --cov=pipeline_runner --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage artifact
+        if: matrix.python-version == '3.12'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: tools/coverage.xml
+
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create dummy .env for build
+        run: cp .env.example .env
+
+      - name: Build scheduler image
+        run: docker compose build scheduler
+
+      - name: Build pipeline runner image (cli profile)
+        run: COMPOSE_PROFILES=cli docker compose build pipeline
+
+      - name: Build pipeline test image (test profile)
+        run: COMPOSE_PROFILES=test docker compose build pipeline-test
+
+      - name: Run pipeline tests in container
+        run: COMPOSE_PROFILES=test docker compose run --rm pipeline-test
+
+  secrets-scan:
+    name: Secrets Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check .env is not tracked
+        run: |
+          if git ls-files --error-unmatch .env 2>/dev/null; then
+            echo "::error::.env is tracked in git! Remove it immediately."
+            exit 1
+          fi
+          echo "OK: .env is not tracked"
+
+      - name: Scan for hardcoded secrets
+        run: |
+          FOUND=$(grep -rn --include='*.py' --include='*.md' --include='*.yaml' \
+            --include='*.yml' --include='*.json' --include='*.toml' \
+            -iE "(password|secret|token)\s*[:=]\s*\"[^\"]{8,}" . \
+            | grep -v '.git/' \
+            | grep -v '.env.example' \
+            | grep -v 'node_modules' \
+            | grep -v 'REDACTED' \
+            | grep -v 'your_' \
+            | grep -v 'placeholder' \
+            | grep -v 'tests/' \
+            || true)
+          if [ -n "$FOUND" ]; then
+            echo "::error::Potential secrets found in committed files:"
+            echo "$FOUND"
+            exit 1
+          fi
+          echo "OK: No hardcoded secrets found"
+
+      - name: Scan for hardcoded local paths
+        run: |
+          FOUND=$(grep -rn --include='*.py' --include='*.md' --include='*.yaml' \
+            --include='*.yml' --include='*.json' --include='*.toml' \
+            -E "(/Users/[a-zA-Z]|/home/[a-zA-Z]|/Volumes/[a-zA-Z])" . \
+            | grep -v '.git/' \
+            | grep -v 'node_modules' \
+            || true)
+          if [ -n "$FOUND" ]; then
+            echo "::error::Hardcoded local paths found in committed files:"
+            echo "$FOUND"
+            exit 1
+          fi
+          echo "OK: No hardcoded paths found"
+
+  validate-config:
+    name: Validate Config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate podcast.json structure
+        run: |
+          python3 -c "
+          import json, sys
+          d = json.load(open('config/podcast.json'))
+          required = ['languages', 'tts', 'audio', 'llm']
+          missing = [k for k in required if k not in d]
+          if missing:
+              print(f'::error::podcast.json missing keys: {missing}')
+              sys.exit(1)
+          langs = len(d['languages'])
+          print(f'OK: podcast.json has {langs} language(s) and all required keys ({", ".join(required)})')
+          "
+
+      - name: Validate .env.example has all required vars
+        run: |
+          REQUIRED="PODCAST_DATA_DIR PODCAST_CONFIG_FILE IAMQ_HTTP_URL OLLAMA_BASE_URL"
+          for var in $REQUIRED; do
+            if ! grep -q "^${var}=" .env.example; then
+              echo "::error::Missing required variable $var in .env.example"
+              exit 1
+            fi
+          done
+          echo "OK: All required variables present in .env.example"

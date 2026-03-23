@@ -1,0 +1,68 @@
+services:
+  # ── Long-running scheduler service ──────────────────────────────
+  # Runs pipelines on the cron schedule defined in spec/CRON.md.
+  # Start:  docker compose up -d scheduler
+  # Logs:   docker compose logs -f scheduler
+  # Stop:   docker compose down scheduler
+  # Ad-hoc: docker compose exec scheduler pipeline generate-script --topics "..."
+  #         docker compose exec scheduler pipeline generate-episode --topics "..."
+  scheduler:
+    build:
+      context: ./tools
+      target: production
+    env_file: .env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PODCAST_DATA_DIR=/app
+      # Use Europe/Berlin so schedule library times match CRON.md times
+      - TZ=Europe/Berlin
+      # Use host.docker.internal to reach IAMQ and Ollama on the Docker host
+      - IAMQ_HTTP_URL=http://host.docker.internal:18790
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      # Mounted path for librarian workspace (container-internal path)
+      - LIBRARIAN_WORKSPACE_MOUNT=/app/librarian_workspace
+    volumes:
+      - ./config:/app/config:ro
+      - ./references:/app/references:ro
+      - ${PODCAST_LOG_DIR:-./log}:/app/log:rw
+      - ${DISTRIBUTION_OUTPUT_DIR:-./output}:/app/output:rw
+      # Mount librarian workspace so handoff step can write signals
+      - ${LIBRARIAN_AGENT_WORKSPACE:-.}:/app/librarian_workspace:rw
+    working_dir: /app
+    command: ["scheduler"]
+    restart: unless-stopped
+    stop_grace_period: 30s
+
+  # ── One-shot pipeline commands ──────────────────────────────────
+  # Use when the scheduler is NOT running, or in CI:
+  #   docker compose run --rm pipeline generate-script --topics "..."
+  #   docker compose run --rm pipeline generate-episode --topics "..."
+  #   docker compose run --rm pipeline validate
+  pipeline:
+    build:
+      context: ./tools
+      target: production
+    env_file: .env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PODCAST_DATA_DIR=/app
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+    volumes:
+      - ./config:/app/config:ro
+      - ./references:/app/references:ro
+      - ${PODCAST_LOG_DIR:-./log}:/app/log:rw
+      - ${DISTRIBUTION_OUTPUT_DIR:-./output}:/app/output:rw
+    working_dir: /app
+    profiles: ["cli"]
+
+  # ── Test runner ─────────────────────────────────────────────────
+  #   docker compose run --rm pipeline-test
+  pipeline-test:
+    build:
+      context: ./tools
+      target: test
+    env_file: .env
+    volumes:
+      - ./config:/app/config:ro
+    working_dir: /app
+    profiles: ["test"]

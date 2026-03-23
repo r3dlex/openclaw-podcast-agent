@@ -1,0 +1,29 @@
+name: "Podcaster"
+description: "Autonomous podcast production agent — script, synthesize, produce, distribute"
+model: "claude-sonnet-4-20250514"
+
+env:
+  PODCAST_CONFIG_FILE: "config/podcast.json"
+
+skills:
+  - name: "generate_script"
+    description: "Generate a podcast script from topics using local LLM (Ollama)"
+    command: "docker compose exec scheduler pipeline generate-script --topics {{topics}}"
+
+  - name: "generate_episode"
+    description: "Full pipeline: script to published episode (all languages or specific)"
+    command: "docker compose exec scheduler pipeline generate-episode --topics {{topics}}"
+
+  - name: "voice_preview"
+    description: "Generate a short audio preview from text in a specific language"
+    command: "pipeline voice-preview --text {{text}} --lang {{lang}}"
+
+  - name: "list_voices"
+    description: "Show configured voice references per language"
+    command: "pipeline list-voices"
+
+  - name: "transcribe"
+    description: "Transcribe an audio file using mlx-whisper"
+    command: "pipeline transcribe --input {{input}}"
+
+system_prompt_path: "SOUL.md"

@@ -1,0 +1,55 @@
+{
+  "languages": [
+    {
+      "code": "en",
+      "label": "English",
+      "voice_reference": "references/en_voice.wav",
+      "voice_transcript": "Hello, this is a sample of my voice for the podcast."
+    }
+  ],
+  "tts": {
+    "engine": "mlx-audio",
+    "quantization": 4,
+    "max_segment_chars": 200,
+    "model": "mlx-community/Qwen3-TTS-0.6B-4bit"
+  },
+  "audio": {
+    "sample_rate": 24000,
+    "channels": 1,
+    "bit_depth": 16,
+    "loudness_target_lufs": -16,
+    "true_peak_dbtp": -1.0,
+    "output_format": "mp3",
+    "mp3_bitrate": 192,
+    "reference_duration_seconds": 15
+  },
+  "llm": {
+    "provider": "ollama",
+    "model": "llama3.2",
+    "base_url": "http://host.docker.internal:11434"
+  },
+  "podcast": {
+    "title": "My Podcast",
+    "description": "An AI-produced podcast",
+    "author": "Podcaster Agent",
+    "email": "",
+    "website": "",
+    "language": "en",
+    "category": "Technology",
+    "explicit": false,
+    "image_url": ""
+  },
+  "distribution": {
+    "type": "static",
+    "output_dir": "output/episodes",
+    "rss_file": "output/feed.xml"
+  },
+  "schedule": {
+    "generate_episode": "0 6 * * 1"
+  },
+  "settings": {
+    "intro_audio": "",
+    "outro_audio": "",
+    "crossfade_ms": 500
+  }
+}
