@@ -15,7 +15,9 @@ COPY podcast_renderer/podcast_renderer/ /app/podcast_renderer/podcast_renderer/
 COPY podcast_renderer/README.md /app/podcast_renderer/README.md
 RUN cd /app/podcast_renderer && poetry install --only main --no-interaction
 
-# Copy pipeline_runner dependency files (Docker cache layer)
+# Copy pipeline_runner pyproject.toml into /app/tools/ so that the path
+# dependency "../podcast_renderer" resolves to /app/podcast_renderer
+WORKDIR /app/tools
 COPY tools/pyproject.toml ./
 
 # Install production dependencies
