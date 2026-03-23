@@ -28,7 +28,7 @@ services:
       - ${DISTRIBUTION_OUTPUT_DIR:-./output}:/app/output:rw
       # Mount librarian workspace so handoff step can write signals
       - ${LIBRARIAN_AGENT_WORKSPACE:-.}:/app/librarian_workspace:rw
-    working_dir: /app
+    working_dir: /app/tools
     command: ["scheduler"]
     restart: unless-stopped
     stop_grace_period: 30s
@@ -52,7 +52,7 @@ services:
       - ./references:/app/references:ro
       - ${PODCAST_LOG_DIR:-./log}:/app/log:rw
       - ${DISTRIBUTION_OUTPUT_DIR:-./output}:/app/output:rw
-    working_dir: /app
+    working_dir: /app/tools
     profiles: ["cli"]
 
   # ── IAMQ Sidecar (inter-agent message queue) ─────────────────────
@@ -81,5 +81,5 @@ services:
     env_file: .env
     volumes:
       - ./config:/app/config:ro
-    working_dir: /app
+    working_dir: /app/tools
     profiles: ["test"]
