@@ -14,8 +14,8 @@ import re
 from pathlib import Path
 from typing import Any
 
-from pipeline_runner.config import PodcastConfig, PodcastSettings
-from pipeline_runner.utils.ffmpeg import run_ffmpeg
+from podcast_renderer.audio.ffmpeg import run_ffmpeg
+from podcast_renderer.config import PodcastConfig
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ class LoudnessNormStep:
         return "clean_episode_audio" in context or "raw_episode_audio" in context
 
     def execute(self, context: dict[str, Any]) -> dict[str, Any]:
-        settings: PodcastSettings = context.get("settings", PodcastSettings())
+        settings = context.get("settings")
         input_path = Path(
             context.get("clean_episode_audio") or context["raw_episode_audio"]
         )

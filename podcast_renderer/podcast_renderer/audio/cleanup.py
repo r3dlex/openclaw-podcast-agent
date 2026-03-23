@@ -12,8 +12,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from pipeline_runner.config import PodcastSettings
-from pipeline_runner.utils.ffmpeg import run_ffmpeg
+from podcast_renderer.audio.ffmpeg import run_ffmpeg
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +30,7 @@ class AudioCleanupStep:
         return "raw_episode_audio" in context and not context.get("skip_cleanup", False)
 
     def execute(self, context: dict[str, Any]) -> dict[str, Any]:
-        settings: PodcastSettings = context.get("settings", PodcastSettings())
+        settings = context.get("settings")
         input_path = Path(context["raw_episode_audio"])
 
         output_path = input_path.parent / "clean_episode.wav"

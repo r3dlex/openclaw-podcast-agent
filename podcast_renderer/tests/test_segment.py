@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from pipeline_runner.steps.segment import TextSegmentationStep, split_text_into_chunks
+from podcast_renderer.content.segment import TextSegmentationStep, split_text_into_chunks
 
 
 class TestSplitTextIntoChunks:

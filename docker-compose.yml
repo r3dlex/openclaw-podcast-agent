@@ -16,9 +16,8 @@ services:
       - PODCAST_DATA_DIR=/app
       # Use Europe/Berlin so schedule library times match CRON.md times
       - TZ=Europe/Berlin
-      # Use host.docker.internal to reach IAMQ and Ollama on the Docker host
+      # Use host.docker.internal to reach IAMQ on the Docker host
       - IAMQ_HTTP_URL=http://host.docker.internal:18790
-      - OLLAMA_BASE_URL=http://host.docker.internal:11434
       # Mounted path for librarian workspace (container-internal path)
       - LIBRARIAN_WORKSPACE_MOUNT=/app/librarian_workspace
     volumes:
@@ -46,7 +45,6 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - PODCAST_DATA_DIR=/app
-      - OLLAMA_BASE_URL=http://host.docker.internal:11434
     volumes:
       - ./config:/app/config:ro
       - ./references:/app/references:ro

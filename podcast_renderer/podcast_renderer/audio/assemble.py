@@ -10,8 +10,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from pipeline_runner.config import PodcastConfig, PodcastSettings
-from pipeline_runner.utils.ffmpeg import run_ffmpeg
+from podcast_renderer.audio.ffmpeg import run_ffmpeg
+from podcast_renderer.config import PodcastConfig
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class EpisodeAssemblyStep:
         return "normalized_audio" in context
 
     def execute(self, context: dict[str, Any]) -> dict[str, Any]:
-        settings: PodcastSettings = context.get("settings", PodcastSettings())
+        settings = context.get("settings")
         normalized = Path(context["normalized_audio"])
 
         # Get config

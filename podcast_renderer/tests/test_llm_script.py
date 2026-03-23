@@ -1,22 +1,24 @@
-"""Tests for the Ollama LLM script generation step."""
+"""Tests for the MiniMax script generation step."""
 
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
 from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from pipeline_runner.config import PodcastSettings
-from pipeline_runner.steps.llm import OllamaScriptStep
+from podcast_renderer.llm.script import ScriptGenerationStep
 
 
 @pytest.fixture
-def settings() -> PodcastSettings:
-    return PodcastSettings(
-        OLLAMA_BASE_URL="http://127.0.0.1:11434",
-        OLLAMA_MODEL="llama3.2",
+def settings() -> SimpleNamespace:
+    """Mock settings object with LLM config attributes."""
+    return SimpleNamespace(
+        llm_base_url="https://api.minimax.io/anthropic",
+        llm_api_key="test-key",
+        llm_model="MiniMax-M2.7",
     )
 
 
@@ -34,22 +36,22 @@ def sample_script_json() -> str:
     })
 
 
-class TestOllamaScriptStep:
-    """Test OllamaScriptStep."""
+class TestScriptGenerationStep:
+    """Test ScriptGenerationStep."""
 
     def test_should_run_with_topics(self) -> None:
-        step = OllamaScriptStep()
+        step = ScriptGenerationStep()
         assert step.should_run({"topics": "AI news"})
 
     def test_should_run_with_manual_script(self) -> None:
-        step = OllamaScriptStep()
+        step = ScriptGenerationStep()
         assert step.should_run({"manual_script": "Hello world"})
 
     def test_should_not_run_without_input(self) -> None:
-        step = OllamaScriptStep()
+        step = ScriptGenerationStep()
         assert not step.should_run({})
 
-    def test_manual_script_json_passthrough(self, settings: PodcastSettings) -> None:
+    def test_manual_script_json_passthrough(self, settings: SimpleNamespace) -> None:
         script_json = json.dumps({
             "title": "Manual Episode",
             "description": "A manual script",
@@ -59,7 +61,7 @@ class TestOllamaScriptStep:
             "language": "en",
         })
 
-        step = OllamaScriptStep()
+        step = ScriptGenerationStep()
         context: dict[str, Any] = {
             "settings": settings,
             "manual_script": script_json,
@@ -70,10 +72,10 @@ class TestOllamaScriptStep:
         assert result["script"]["title"] == "Manual Episode"
         assert len(result["script"]["segments"]) == 1
 
-    def test_manual_script_plain_text(self, settings: PodcastSettings) -> None:
+    def test_manual_script_plain_text(self, settings: SimpleNamespace) -> None:
         plain_text = "Welcome to the show.\n\nToday we discuss AI.\n\nThanks for listening."
 
-        step = OllamaScriptStep()
+        step = ScriptGenerationStep()
         context: dict[str, Any] = {
             "settings": settings,
             "manual_script": plain_text,
@@ -84,20 +86,25 @@ class TestOllamaScriptStep:
         assert len(result["script"]["segments"]) == 3
         assert result["script"]["segments"][0]["text"] == "Welcome to the show."
 
-    @patch("pipeline_runner.steps.llm.requests.post")
-    def test_ollama_success(
+    @patch("podcast_renderer.llm.script.anthropic")
+    def test_minimax_success(
         self,
-        mock_post: MagicMock,
-        settings: PodcastSettings,
+        mock_anthropic: MagicMock,
+        settings: SimpleNamespace,
         sample_script_json: str,
     ) -> None:
-        mock_post.return_value = MagicMock(
-            status_code=200,
-            json=lambda: {"response": sample_script_json},
-        )
-        mock_post.return_value.raise_for_status = MagicMock()
+        mock_text_block = MagicMock()
+        mock_text_block.type = "text"
+        mock_text_block.text = sample_script_json
 
-        step = OllamaScriptStep()
+        mock_message = MagicMock()
+        mock_message.content = [mock_text_block]
+
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = mock_message
+        mock_anthropic.Anthropic.return_value = mock_client
+
+        step = ScriptGenerationStep()
         context: dict[str, Any] = {
             "settings": settings,
             "topics": "AI news",
@@ -109,15 +116,20 @@ class TestOllamaScriptStep:
         assert result["script"]["title"] == "AI News This Week"
         assert len(result["script"]["segments"]) == 3
 
-    @patch("pipeline_runner.steps.llm.requests.post")
-    def test_ollama_connection_error_fallback(
-        self, mock_post: MagicMock, settings: PodcastSettings
+        mock_anthropic.Anthropic.assert_called_once_with(
+            base_url="https://api.minimax.io/anthropic",
+            api_key="test-key",
+        )
+
+    @patch("podcast_renderer.llm.script.anthropic")
+    def test_minimax_error_fallback(
+        self, mock_anthropic: MagicMock, settings: SimpleNamespace
     ) -> None:
-        import requests
+        mock_client = MagicMock()
+        mock_client.messages.create.side_effect = Exception("API error")
+        mock_anthropic.Anthropic.return_value = mock_client
 
-        mock_post.side_effect = requests.ConnectionError("unreachable")
-
-        step = OllamaScriptStep()
+        step = ScriptGenerationStep()
         context: dict[str, Any] = {
             "settings": settings,
             "topics": "AI safety",
@@ -125,37 +137,39 @@ class TestOllamaScriptStep:
         }
         result = step.execute(context)
 
-        # Should produce a fallback script
         assert "script" in result
         assert result["script"]["segments"][0]["text"] == "AI safety"
 
-    @patch("pipeline_runner.steps.llm.requests.post")
-    def test_ollama_invalid_json_fallback(
-        self, mock_post: MagicMock, settings: PodcastSettings
+    @patch("podcast_renderer.llm.script.anthropic")
+    def test_minimax_invalid_json_fallback(
+        self, mock_anthropic: MagicMock, settings: SimpleNamespace
     ) -> None:
-        mock_post.return_value = MagicMock(
-            status_code=200,
-            json=lambda: {"response": "not valid json at all"},
-        )
-        mock_post.return_value.raise_for_status = MagicMock()
+        mock_text_block = MagicMock()
+        mock_text_block.type = "text"
+        mock_text_block.text = "not valid json at all"
 
-        step = OllamaScriptStep()
+        mock_message = MagicMock()
+        mock_message.content = [mock_text_block]
+
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = mock_message
+        mock_anthropic.Anthropic.return_value = mock_client
+
+        step = ScriptGenerationStep()
         context: dict[str, Any] = {
             "settings": settings,
             "topics": "test",
         }
         result = step.execute(context)
 
-        # Should produce a fallback script
         assert "script" in result
         assert len(result["script"]["segments"]) >= 1
 
     def test_name(self) -> None:
-        assert OllamaScriptStep().name == "ollama_script"
+        assert ScriptGenerationStep().name == "script_generation"
 
-    def test_manual_script_takes_precedence(self, settings: PodcastSettings) -> None:
-        """Manual script should be used even if topics are also provided."""
-        step = OllamaScriptStep()
+    def test_manual_script_takes_precedence(self, settings: SimpleNamespace) -> None:
+        step = ScriptGenerationStep()
         context: dict[str, Any] = {
             "settings": settings,
             "topics": "AI news",
@@ -165,6 +179,5 @@ class TestOllamaScriptStep:
                 "language": "en",
             }),
         }
-        # No HTTP calls should be made
         result = step.execute(context)
         assert result["script"]["title"] == "Manual"

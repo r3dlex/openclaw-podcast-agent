@@ -6,7 +6,7 @@ Steps: EpisodeAssemblyStep
 from __future__ import annotations
 
 from pipeline_runner.runner import Pipeline
-from pipeline_runner.steps.assemble import EpisodeAssemblyStep
+from podcast_renderer.audio.assemble import EpisodeAssemblyStep
 
 
 def build_assembly_pipeline() -> Pipeline:

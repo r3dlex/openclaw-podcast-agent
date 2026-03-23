@@ -11,8 +11,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from pipeline_runner.config import PodcastSettings
-from pipeline_runner.tts.base import get_engine
+from podcast_renderer.tts.base import get_engine
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +33,7 @@ class TTSGenerationStep:
         )
 
     def execute(self, context: dict[str, Any]) -> dict[str, Any]:
-        settings: PodcastSettings = context.get("settings", PodcastSettings())
+        settings = context.get("settings")
         script = context["script"]
         ref_audio = Path(context["reference_audio_path"])
         ref_text = context["reference_text"]

@@ -6,7 +6,7 @@ Skills define _how_ tools work. This file is for _your_ specifics.
 
 | Skill | Command | Cost Tier |
 |-------|---------|-----------|
-| `generate_script` | `docker compose exec scheduler pipeline generate-script --topics "..."` | Tier 1 (local LLM) |
+| `generate_script` | `docker compose exec scheduler pipeline generate-script --topics "..."` | Tier 1 (MiniMax API) |
 | `generate_episode` | `docker compose exec scheduler pipeline generate-episode --topics "..."` | Tier 2 (compute) |
 | `voice_preview` | `pipeline voice-preview --text "..." --lang en` | Tier 2 (compute) |
 | `list_voices` | `pipeline list-voices` | Tier 1 (free) |
@@ -17,7 +17,7 @@ All skill commands execute instantly via `docker compose exec` (no container sta
 One-shot fallback: `docker compose run --rm --profile cli pipeline <cmd>`.
 
 **Note:** TTS and transcription steps use MLX and must run on the Apple Silicon host,
-not inside Docker containers. The scheduler handles ffmpeg processing and Ollama calls
+not inside Docker containers. The scheduler handles ffmpeg processing and MiniMax LLM calls
 in Docker; voice synthesis runs natively.
 
 ## Production Config
@@ -25,13 +25,14 @@ in Docker; voice synthesis runs natively.
 - Languages and voice references: `config/podcast.json`
 - TTS engine selection: `config/podcast.json` (mlx-audio or f5-tts-mlx)
 - Audio standards: 24 kHz, -16 LUFS, -1.0 dBTP, MP3 192 kbps
-- Script generation: Ollama at `$OLLAMA_BASE_URL` (default `http://host.docker.internal:11434`)
+- Script generation: MiniMax LLM (model MiniMax-M2.7) via Anthropic-compatible API at `$MINIMAX_BASE_URL`
 
 ## Inter-Agent Message Queue (IAMQ)
 
 The IAMQ service at `$IAMQ_HTTP_URL` (default `http://127.0.0.1:18790`) connects
-all OpenClaw agents. The scheduler auto-registers on startup and sends heartbeats
-every 2 minutes. Every pipeline announces its completion to the queue.
+all OpenClaw agents. IAMQ registration and heartbeats are handled by a sidecar
+container (not by the Python scheduler). Every pipeline announces its completion
+to the queue.
 
 ```bash
 # Check your inbox
@@ -48,7 +49,7 @@ curl -X POST http://127.0.0.1:18790/send \
 
 ## Environment-Specific Notes
 
-_(Add local setup details here: voice references, Ollama models, preferred styles, etc.)_
+_(Add local setup details here: voice references, MiniMax API config, preferred styles, etc.)_
 
 ---
 

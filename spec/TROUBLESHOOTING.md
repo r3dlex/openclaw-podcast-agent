@@ -14,18 +14,19 @@ Common issues and their fixes.
 - Docker-based commands (`docker compose exec scheduler pipeline ...`) handle non-MLX steps only.
 - In CI, all MLX-dependent tests are mocked — see `spec/TESTING.md`.
 
-## Ollama Unreachable
+## MiniMax API Errors
 
-**Symptom:** Script generation fails with connection errors to Ollama.
+**Symptom:** Script generation fails with connection or authentication errors.
 
-**Cause:** Ollama is not running, or Docker cannot reach it via `host.docker.internal`.
+**Cause:** MiniMax API is unreachable, API key is invalid, or the model is misconfigured.
 
 **Fix:**
-1. Verify Ollama is running: `curl http://localhost:11434/api/tags`
-2. From Docker, the URL is `http://host.docker.internal:11434` — confirm this resolves.
-3. Check `OLLAMA_BASE_URL` in `.env` or `docker-compose.yml`.
-4. Verify the configured model is pulled: `ollama pull llama3.2`
-5. Check `config/podcast.json` field `llm.model` matches an available model.
+1. Verify the API key is set: check `MINIMAX_API_KEY` in `.env`.
+2. Test connectivity: `curl -H "Authorization: Bearer $MINIMAX_API_KEY" $MINIMAX_BASE_URL/models`
+3. Confirm the model name: `MINIMAX_MODEL` should be `MiniMax-M2.7` (or as configured).
+4. Check `config/podcast.json` field `llm.model` matches the expected model.
+5. MiniMax uses an Anthropic-compatible API — ensure `MINIMAX_BASE_URL` points to the correct endpoint.
+6. Check rate limits: MiniMax may throttle requests if you exceed your plan quota.
 
 ## ffmpeg Not Found
 

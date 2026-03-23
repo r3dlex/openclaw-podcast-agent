@@ -10,9 +10,9 @@ from typing import Any
 
 from pipeline_runner.config import PodcastConfig, PodcastSettings
 from pipeline_runner.runner import Pipeline
-from pipeline_runner.steps.concat import ConcatenateStep
-from pipeline_runner.steps.reference import PrepareReferenceStep
-from pipeline_runner.steps.tts import TTSGenerationStep
+from podcast_renderer.audio.concat import ConcatenateStep
+from podcast_renderer.audio.reference import PrepareReferenceStep
+from podcast_renderer.audio.tts_step import TTSGenerationStep
 
 
 def build_voice_pipeline() -> Pipeline:

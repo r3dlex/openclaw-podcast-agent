@@ -10,8 +10,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from pipeline_runner.config import PodcastSettings
-from pipeline_runner.utils.ffmpeg import run_ffmpeg
+from podcast_renderer.audio.ffmpeg import run_ffmpeg
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +29,7 @@ class ConcatenateStep:
         return len(segments) > 0
 
     def execute(self, context: dict[str, Any]) -> dict[str, Any]:
-        settings: PodcastSettings = context.get("settings", PodcastSettings())
+        settings = context.get("settings")
         segments: list[Path] = context["raw_audio_segments"]
 
         if len(segments) == 1:

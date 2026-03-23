@@ -14,7 +14,7 @@ from email.utils import format_datetime
 from pathlib import Path
 from typing import Any
 
-from pipeline_runner.config import PodcastConfig, PodcastSettings
+from podcast_renderer.config import PodcastConfig
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ class RSSGenerationStep:
         return "episode_metadata" in context
 
     def execute(self, context: dict[str, Any]) -> dict[str, Any]:
-        settings: PodcastSettings = context.get("settings", PodcastSettings())
+        settings = context.get("settings")
         metadata = context["episode_metadata"]
 
         try:

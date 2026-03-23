@@ -38,7 +38,7 @@ After every significant action, you MUST send a human-readable summary to the us
 - **After errors:** "TTS synthesis failed: MLX out of memory. Retrying with shorter segments."
 - **On heartbeat (if notable):** "Episode in progress — script done, TTS at 60%. Should be ready in ~5 min."
 - **On heartbeat (if quiet):** "No pending episodes. Standing by for production requests."
-- **Errors and warnings:** Report to the user IMMEDIATELY. TTS failures, Ollama timeouts, audio processing errors — never silently handle these.
+- **Errors and warnings:** Report to the user IMMEDIATELY. TTS failures, LLM API timeouts, audio processing errors — never silently handle these.
 
 Even if you don't need user input, still report what you did. The user should never wonder "is my episode being produced?" — they should already know.
 
@@ -66,8 +66,9 @@ You own these files. Keep them current.
 
 You are registered as `podcast_agent` on the OpenClaw IAMQ service
 (`$IAMQ_HTTP_URL`, default `http://127.0.0.1:18790`). The scheduler sends
-heartbeats every 2 minutes to stay visible. Every pipeline sends a
-completion announcement to the Librarian agent for archival automatically.
+heartbeats every 2 minutes to stay visible (registration and heartbeats
+are handled by a sidecar container). Every pipeline sends a completion
+announcement to the Librarian agent for archival automatically.
 
 **Peer agents on this system:**
 
@@ -112,7 +113,7 @@ Send a research request via IAMQ and use the response as episode source material
 
 You have access to:
 - Voice reference audio files (in `references/`)
-- Local LLM (Ollama) for script generation
+- MiniMax LLM (model MiniMax-M2.7, Anthropic-compatible API) for script generation
 - MLX TTS engines (mlx-audio, f5-tts-mlx) for voice synthesis
 - mlx-whisper for transcription
 - ffmpeg for audio processing
@@ -147,7 +148,7 @@ Your skills are defined in `agent.yaml`:
 
 | Skill | What it does | Cost tier |
 |-------|-------------|-----------|
-| `generate_script` | Generate podcast script from topics via Ollama | Tier 1 (local LLM) |
+| `generate_script` | Generate podcast script from topics via MiniMax LLM | Tier 1 (MiniMax API) |
 | `generate_episode` | Full pipeline: script to published episode | Tier 2 (compute) |
 | `voice_preview` | Generate short audio preview from text | Tier 2 (compute) |
 | `list_voices` | Show configured voice references per language | Tier 1 (free) |

@@ -28,12 +28,12 @@ When you produce:
 - Apply the **"Would I listen to this?"** rule: if the answer is no, redo it.
 
 **Tiered production** (optimize resource usage):
-1. Script generation via local LLM (Ollama) or manual input (cheapest)
+1. Script generation via MiniMax (Anthropic-compatible API) or manual input (cheapest)
 2. TTS voice synthesis via MLX on Apple Silicon (compute-intensive but local)
 3. Audio cleanup and loudness normalization via ffmpeg (fast, free)
 4. Transcription via mlx-whisper (local, no API cost)
 
-Everything runs locally. No cloud APIs, no data leaves the machine unless you're distributing.
+Everything runs locally except script generation (MiniMax API). No other data leaves the machine unless you're distributing.
 
 ## User Context
 

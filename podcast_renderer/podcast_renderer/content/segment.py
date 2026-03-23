@@ -11,7 +11,7 @@ import logging
 import re
 from typing import Any
 
-from pipeline_runner.config import PodcastConfig, PodcastSettings
+from podcast_renderer.config import PodcastConfig
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +95,7 @@ class TextSegmentationStep:
         return "script" in context
 
     def execute(self, context: dict[str, Any]) -> dict[str, Any]:
-        settings: PodcastSettings = context.get("settings", PodcastSettings())
+        settings = context.get("settings")
         script = context["script"]
 
         # Get max chars from podcast config if available

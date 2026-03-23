@@ -1,19 +1,16 @@
 [tool.poetry]
-name = "pipeline-runner"
+name = "podcast-renderer"
 version = "0.1.0"
-description = "Zero-install pipeline runner for the Podcast agent"
+description = "Audio rendering, TTS, transcription, and content generation for podcast production"
 authors = ["OpenClaw <noreply@openclaw.ai>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "pipeline_runner"}]
+packages = [{include = "podcast_renderer"}]
 
 [tool.poetry.dependencies]
 python = "^3.12"
 requests = "^2.31"
-pydantic = "^2.0"
-pydantic-settings = "^2.0"
-schedule = "^1.2"
-podcast-renderer = {path = "../podcast_renderer", develop = true}
+anthropic = "^0.52"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0"
@@ -22,10 +19,6 @@ pytest-mock = "^3.14"
 ruff = "^0.8"
 mypy = "^1.13"
 types-requests = "^2.31"
-
-[tool.poetry.scripts]
-pipeline = "pipeline_runner.cli:main"
-scheduler = "pipeline_runner.scheduler:run_scheduler"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -41,10 +34,6 @@ select = ["E", "F", "I", "N", "W", "UP", "B", "SIM", "RUF"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--strict-markers -v --tb=short"
-markers = [
-    "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-]
 
 [tool.mypy]
 python_version = "3.12"
@@ -53,5 +42,5 @@ warn_return_any = true
 warn_unused_configs = true
 
 [[tool.mypy.overrides]]
-module = ["schedule.*", "podcast_renderer.*"]
+module = ["anthropic.*", "mlx_audio.*", "f5_tts_mlx.*", "mlx_whisper.*"]
 ignore_missing_imports = true

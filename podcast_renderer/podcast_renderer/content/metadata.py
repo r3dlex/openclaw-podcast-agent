@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from pipeline_runner.utils.ffmpeg import get_audio_duration
+from podcast_renderer.audio.ffmpeg import get_audio_duration
 
 logger = logging.getLogger(__name__)
 

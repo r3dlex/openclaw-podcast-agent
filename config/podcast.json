@@ -24,9 +24,9 @@
     "reference_duration_seconds": 15
   },
   "llm": {
-    "provider": "ollama",
-    "model": "llama3.2",
-    "base_url": "http://host.docker.internal:11434"
+    "provider": "minimax",
+    "model": "MiniMax-M2.7",
+    "base_url": "https://api.minimax.io/anthropic"
   },
   "podcast": {
     "title": "My Podcast",

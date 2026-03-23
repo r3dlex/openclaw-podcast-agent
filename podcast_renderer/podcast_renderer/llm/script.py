@@ -1,7 +1,7 @@
-"""Ollama LLM step — generate a podcast script from topics or pass through manual scripts.
+"""MiniMax LLM step — generate a podcast script via MiniMax's Anthropic-compatible API.
 
-Uses the Ollama HTTP API for local LLM inference. Supports manual script
-passthrough when a pre-written script is provided.
+Uses the Anthropic Python SDK pointed at MiniMax's endpoint for script generation.
+Supports manual script passthrough when a pre-written script is provided.
 """
 
 from __future__ import annotations
@@ -10,9 +10,7 @@ import json
 import logging
 from typing import Any
 
-import requests
-
-from pipeline_runner.config import PodcastSettings
+import anthropic
 
 logger = logging.getLogger(__name__)
 
@@ -43,14 +41,17 @@ Guidelines:
 """
 
 
-class OllamaScriptStep:
-    """Generate a podcast script from topics via Ollama, or pass through a manual script.
+class ScriptGenerationStep:
+    """Generate a podcast script from topics via MiniMax, or pass through a manual script.
+
+    Uses the Anthropic SDK pointed at MiniMax's Anthropic-compatible API
+    (https://api.minimax.io/anthropic).
 
     Context in:  topics (str) and/or manual_script (str), settings, language (optional)
     Context out: script (dict with title, description, segments, language)
     """
 
-    name = "ollama_script"
+    name = "script_generation"
 
     def should_run(self, context: dict[str, Any]) -> bool:
         return "topics" in context or "manual_script" in context
@@ -63,17 +64,21 @@ class OllamaScriptStep:
             logger.info("Using manual script: %s", script.get("title", "untitled"))
             return context
 
-        # Generate via Ollama
-        settings: PodcastSettings = context.get("settings", PodcastSettings())
+        # Generate via MiniMax
+        settings = context.get("settings")
         topics = context.get("topics", "")
         language = context.get("language", "en")
 
         prompt = f"Create a podcast script about: {topics}\nLanguage: {language}"
 
-        script = self._call_ollama(settings, prompt)
+        script = self._call_minimax(settings, prompt)
         if script:
             context["script"] = script
-            logger.info("Generated script: %s (%d segments)", script.get("title", "untitled"), len(script.get("segments", [])))
+            logger.info(
+                "Generated script: %s (%d segments)",
+                script.get("title", "untitled"),
+                len(script.get("segments", [])),
+            )
         else:
             # Fallback: wrap topics as a simple single-segment script
             context["script"] = {
@@ -82,35 +87,35 @@ class OllamaScriptStep:
                 "segments": [{"speaker": "host", "text": topics, "notes": ""}],
                 "language": language,
             }
-            logger.warning("Ollama unavailable, using fallback script")
+            logger.warning("MiniMax unavailable, using fallback script")
 
         return context
 
-    def _call_ollama(self, settings: PodcastSettings, prompt: str) -> dict[str, Any] | None:
-        """Call Ollama API to generate a script."""
-        url = f"{settings.ollama_base_url}/api/generate"
-        payload = {
-            "model": settings.ollama_model,
-            "prompt": prompt,
-            "system": SCRIPT_SYSTEM_PROMPT,
-            "stream": False,
-            "format": "json",
-        }
-
+    def _call_minimax(self, settings, prompt: str) -> dict[str, Any] | None:
+        """Call MiniMax via Anthropic-compatible API to generate a script."""
         try:
-            resp = requests.post(url, json=payload, timeout=120)
-            resp.raise_for_status()
-            data = resp.json()
-            response_text = data.get("response", "")
+            client = anthropic.Anthropic(
+                base_url=settings.llm_base_url,
+                api_key=settings.llm_api_key,
+            )
+
+            message = client.messages.create(
+                model=settings.llm_model,
+                max_tokens=4096,
+                system=SCRIPT_SYSTEM_PROMPT,
+                messages=[{"role": "user", "content": prompt}],
+            )
+
+            # Extract text from response
+            response_text = ""
+            for block in message.content:
+                if block.type == "text":
+                    response_text += block.text
+
             return self._parse_json_response(response_text)
-        except requests.ConnectionError:
-            logger.warning("Ollama unreachable at %s", settings.ollama_base_url)
-            return None
-        except requests.Timeout:
-            logger.warning("Ollama request timed out")
-            return None
+
         except Exception:
-            logger.warning("Ollama script generation failed", exc_info=True)
+            logger.warning("MiniMax script generation failed", exc_info=True)
             return None
 
     def _parse_json_response(self, text: str) -> dict[str, Any] | None:
@@ -119,13 +124,11 @@ class OllamaScriptStep:
         cleaned = text.strip()
         if cleaned.startswith("```"):
             lines = cleaned.split("\n")
-            # Remove first and last lines (fences)
             lines = [l for l in lines if not l.strip().startswith("```")]
             cleaned = "\n".join(lines)
 
         try:
             result: dict[str, Any] = json.loads(cleaned)
-            # Validate required fields
             if "segments" not in result:
                 logger.warning("LLM response missing 'segments' field")
                 return None
@@ -161,3 +164,7 @@ class OllamaScriptStep:
             "segments": segments,
             "language": language,
         }
+
+
+# Backward compatibility alias
+OllamaScriptStep = ScriptGenerationStep

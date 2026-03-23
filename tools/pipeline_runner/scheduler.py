@@ -31,7 +31,6 @@ from typing import Any
 import schedule
 
 from pipeline_runner.config import PodcastSettings
-from pipeline_runner.steps.iamq import iamq_heartbeat, iamq_register
 
 logger = logging.getLogger(__name__)
 
@@ -136,9 +135,8 @@ def register_schedule(settings: PodcastSettings) -> list[ScheduledTask]:
     )
     tasks.append(ScheduledTask("Weekly episode", "monday 06:00", "generate_episode"))
 
-    # IAMQ heartbeat — every 2 minutes (TTL is 5 min on the MQ side)
-    schedule.every(2).minutes.do(iamq_heartbeat, settings)
-    tasks.append(ScheduledTask("IAMQ heartbeat", "every 2 min", "iamq_heartbeat"))
+    # Note: IAMQ registration and heartbeats are handled by the IAMQ sidecar
+    # container in docker-compose.yml — no Python-side heartbeat needed.
 
     return tasks
 
@@ -156,9 +154,7 @@ def run_scheduler(settings: PodcastSettings | None = None) -> None:
     _run_state = _load_state()
     logger.info("Loaded scheduler state: %d tasks previously ran", len(_run_state))
 
-    # Register with IAMQ on startup
-    iamq_register(settings)
-
+    # Note: IAMQ registration handled by sidecar container
     tasks = register_schedule(settings)
 
     logger.info("Scheduler started with %d tasks:", len(tasks))

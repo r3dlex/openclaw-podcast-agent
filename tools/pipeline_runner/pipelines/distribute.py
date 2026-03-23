@@ -11,13 +11,13 @@ from typing import Any
 
 from pipeline_runner.config import PodcastSettings
 from pipeline_runner.runner import Pipeline
-from pipeline_runner.steps.chapters import ChapterMarkerStep
 from pipeline_runner.steps.handoff import LibrarianHandoffStep
 from pipeline_runner.steps.iamq import IAMQAnnounceStep
-from pipeline_runner.steps.metadata import MetadataStep
-from pipeline_runner.steps.rss import RSSGenerationStep
-from pipeline_runner.steps.shownotes import ShowNotesStep
-from pipeline_runner.steps.transcribe import TranscribeStep
+from podcast_renderer.content.chapters import ChapterMarkerStep
+from podcast_renderer.content.metadata import MetadataStep
+from podcast_renderer.content.rss import RSSGenerationStep
+from podcast_renderer.llm.shownotes import ShowNotesStep
+from podcast_renderer.transcription.whisper import TranscribeStep
 
 
 def build_distribute_pipeline() -> Pipeline:

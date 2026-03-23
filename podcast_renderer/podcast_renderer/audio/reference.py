@@ -10,8 +10,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from pipeline_runner.config import PodcastConfig, PodcastSettings
-from pipeline_runner.utils.ffmpeg import convert_reference_audio
+from podcast_renderer.audio.ffmpeg import convert_reference_audio
+from podcast_renderer.config import PodcastConfig
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class PrepareReferenceStep:
         return "language_config" in context
 
     def execute(self, context: dict[str, Any]) -> dict[str, Any]:
-        settings: PodcastSettings = context.get("settings", PodcastSettings())
+        settings = context.get("settings")
         lang_config = context["language_config"]
 
         ref_path = Path(lang_config.get("voice_reference", ""))

@@ -53,7 +53,7 @@ After completing all checks above, **send a summary to the user via your messagi
 - If you processed production requests or episodes are in progress: summarize what happened.
   Example: "Heartbeat: episode '[title]' in production — TTS at 80%. Should be ready in ~3 min."
 - If nothing happened: "No pending episodes. Standing by for production requests."
-- TTS failures, Ollama timeouts, audio errors: report IMMEDIATELY, don't wait for the heartbeat summary.
+- TTS failures, LLM API timeouts, audio errors: report IMMEDIATELY, don't wait for the heartbeat summary.
 
 ## Rules
 

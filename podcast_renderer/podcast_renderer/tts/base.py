@@ -71,11 +71,11 @@ def get_engine(engine_name: str) -> TTSEngine:
         RuntimeError: If the engine's dependencies are not available.
     """
     if engine_name == "mlx-audio":
-        from pipeline_runner.tts.mlx_audio_engine import MlxAudioEngine
+        from podcast_renderer.tts.mlx_audio_engine import MlxAudioEngine
 
         engine = MlxAudioEngine()
     elif engine_name == "f5-tts-mlx":
-        from pipeline_runner.tts.f5_tts_engine import F5TTSEngine
+        from podcast_renderer.tts.f5_tts_engine import F5TTSEngine
 
         engine = F5TTSEngine()
     else:

@@ -23,18 +23,19 @@ class TestPodcastSettings:
         assert settings.iamq_agent_id == "podcast_agent"
         assert settings.tts_engine == "mlx-audio"
         assert settings.tts_quantization == 4
-        assert settings.ollama_model == "llama3.2"
+        assert settings.llm_model == "MiniMax-M2.7"
+        assert settings.llm_base_url == "https://api.minimax.io/anthropic"
 
     def test_custom_values(self) -> None:
         settings = PodcastSettings(
             PODCAST_DATA_DIR="/tmp/test",
             IAMQ_HTTP_URL="http://custom:9999",
             TTS_ENGINE="f5-tts-mlx",
-            OLLAMA_MODEL="qwen3:8b",
+            LLM_MODEL="MiniMax-M2.5",
         )
         assert settings.iamq_http_url == "http://custom:9999"
         assert settings.tts_engine == "f5-tts-mlx"
-        assert settings.ollama_model == "qwen3:8b"
+        assert settings.llm_model == "MiniMax-M2.5"
 
     def test_log_dir_creation(self, tmp_path: Path) -> None:
         settings = PodcastSettings(PODCAST_DATA_DIR=str(tmp_path))
@@ -103,8 +104,8 @@ class TestPodcastConfig:
 
     def test_llm_config(self, podcast_config: PodcastConfig) -> None:
         llm = podcast_config.llm
-        assert llm["provider"] == "ollama"
-        assert llm["model"] == "llama3.2"
+        assert llm["provider"] == "minimax"
+        assert llm["model"] == "MiniMax-M2.7"
 
     def test_distribution_config(self, podcast_config: PodcastConfig) -> None:
         dist = podcast_config.distribution

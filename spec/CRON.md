@@ -7,14 +7,13 @@ Tasks the Podcaster agent runs on a recurring schedule. The scheduler service (`
 | Schedule | Task | Description |
 |----------|------|-------------|
 | Monday 06:00 | Weekly episode generation | Full episode pipeline for all configured languages |
-| Every 2 min | IAMQ heartbeat | Keep `podcast_agent` visible to peer agents |
 
 ## Weekly Episode Generation
 
 **Cron:** `0 6 * * 1` (Monday at 06:00)
 
 Runs the full episode pipeline:
-1. Generate script from configured topics/sources via Ollama
+1. Generate script from configured topics/sources via MiniMax LLM
 2. Synthesize voice per language (delegates to host macOS for MLX)
 3. Normalize and clean audio via ffmpeg
 4. Assemble episode with intro/outro, transcript, show notes
@@ -25,11 +24,9 @@ Source: `config/podcast.json` field `schedule.generate_episode`.
 
 ## IAMQ Heartbeat
 
-**Interval:** Every 2 minutes
-
-Sends `POST $IAMQ_HTTP_URL/heartbeat {"agent_id": "podcast_agent"}` to maintain presence on the inter-agent message queue. Also checks inbox for pending requests from peer agents.
-
-Handled by `pipeline_runner/scheduler.py`.
+IAMQ registration and heartbeats are handled by a **sidecar container**, not by the
+Python scheduler. The sidecar sends heartbeats every 2 minutes automatically.
+No cron entry is needed in the pipeline runner for this.
 
 ## Notes
 

@@ -11,14 +11,14 @@ from typing import Any
 
 from pipeline_runner.config import PodcastSettings
 from pipeline_runner.runner import Pipeline
-from pipeline_runner.steps.llm import OllamaScriptStep
-from pipeline_runner.steps.segment import TextSegmentationStep
+from podcast_renderer.content.segment import TextSegmentationStep
+from podcast_renderer.llm.script import ScriptGenerationStep
 
 
 def build_script_pipeline() -> Pipeline:
     """Build the script generation pipeline."""
     pipeline = Pipeline("script_generation")
-    pipeline.add_step(OllamaScriptStep())
+    pipeline.add_step(ScriptGenerationStep())
     pipeline.add_step(TextSegmentationStep())
     return pipeline
 

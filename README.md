@@ -4,21 +4,32 @@ Autonomous podcast production agent for the OpenClaw ecosystem. Generates podcas
 
 ## Features
 
-- **Script generation** via local LLM (Ollama) or manual input
+- **Script generation** via MiniMax LLM (Anthropic-compatible API) or manual input
 - **Dual TTS engines**: mlx-audio (Qwen3-TTS) and f5-tts-mlx, switchable via config
 - **Configurable multilingual** episode production with per-language voice references
 - **Audio cleanup** and loudness normalization (-16 LUFS / -1.0 dBTP)
 - **Transcription** via mlx-whisper with chapter markers and show notes
 - **RSS distribution** with Podcast 2.0 support
-- **IAMQ integration** for inter-agent communication
+- **IAMQ integration** for inter-agent communication (sidecar-based)
 - **Zero-install** Docker containers for all non-MLX processing
+
+## Project Structure
+
+Two independent Python packages:
+
+| Package | Location | Purpose |
+|---------|----------|---------|
+| **podcast-renderer** | `podcast_renderer/` | TTS engines, audio processing, LLM integration, transcription, content generation |
+| **pipeline-runner** | `tools/` | Pipeline orchestration, CLI, scheduler, IAMQ/handoff/notify steps |
+
+`pipeline-runner` depends on `podcast-renderer` as a path dependency. Each has its own `pyproject.toml`, `Dockerfile`, and test suite.
 
 ## Quick Start
 
 ```bash
 # 1. Configure
 cp .env.example .env
-# Edit .env with your settings
+# Edit .env — set LLM_API_KEY (MiniMax) at minimum
 
 # 2. Add voice reference
 # Place a 10-15s WAV recording in references/en_voice.wav
@@ -36,7 +47,7 @@ docker compose exec scheduler pipeline generate-script --topics "AI safety"
 ## Architecture
 
 Five-stage composable pipeline:
-1. **Script** — Generate podcast script from topics via Ollama (or manual input)
+1. **Script** — Generate podcast script from topics via MiniMax LLM (or manual input)
 2. **Voice** — Synthesize speech via MLX TTS with voice cloning
 3. **Cleanup** — Denoise, filter, and normalize audio via ffmpeg
 4. **Assembly** — Combine intro/voice/outro, export MP3 + WAV
@@ -48,7 +59,7 @@ See `CLAUDE.md` for the full developer guide and `spec/ARCHITECTURE.md` for syst
 
 - Docker (for pipeline engine, ffmpeg, scheduling)
 - Apple Silicon Mac (for MLX TTS and transcription)
-- Ollama (optional, for script generation)
+- MiniMax API key (for script and show notes generation)
 
 ## License
 

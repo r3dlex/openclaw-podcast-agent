@@ -54,9 +54,9 @@ def sample_podcast_config_data() -> dict[str, Any]:
             "reference_duration_seconds": 15,
         },
         "llm": {
-            "provider": "ollama",
-            "model": "llama3.2",
-            "base_url": "http://localhost:11434",
+            "provider": "minimax",
+            "model": "MiniMax-M2.7",
+            "base_url": "https://api.minimax.io/anthropic",
         },
         "podcast": {
             "title": "Test Podcast",
@@ -102,7 +102,8 @@ def test_settings(tmp_data_dir: Path, podcast_config_file: Path) -> PodcastSetti
         PODCAST_CONFIG_FILE=str(podcast_config_file),
         IAMQ_HTTP_URL="http://127.0.0.1:18790",
         IAMQ_AGENT_ID="podcast_agent",
-        OLLAMA_BASE_URL="http://127.0.0.1:11434",
-        OLLAMA_MODEL="llama3.2",
+        LLM_BASE_URL="https://api.minimax.io/anthropic",
+        LLM_API_KEY="test-key",
+        LLM_MODEL="MiniMax-M2.7",
         TTS_ENGINE="mlx-audio",
     )

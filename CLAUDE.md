@@ -6,13 +6,15 @@ The Podcaster reads `AGENTS.md`, `SOUL.md`, `IDENTITY.md`, `USER.md`, `TOOLS.md`
 ## What Is This Repo?
 
 The **Openclaw Podcast Agent** is an autonomous podcast production system that:
-1. Generates podcast scripts from topics (via local LLM) or accepts manual scripts
+1. Generates podcast scripts from topics (via MiniMax LLM) or accepts manual scripts
 2. Synthesizes speech using MLX TTS engines (mlx-audio/Qwen3-TTS or f5-tts-mlx)
 3. Cleans and normalizes audio (ffmpeg)
 4. Assembles episodes with intro/outro and loudness targeting
 5. Transcribes, generates show notes, and publishes via RSS
 
 ## Repo Layout
+
+The project is split into two Python packages:
 
 ```
 openclaw-podcast-agent/
@@ -25,22 +27,34 @@ openclaw-podcast-agent/
 │   ├── podcast.json                   # Languages, TTS engine, audio params, schedule
 │   └── rss_template.xml               # RSS feed template
 ├── references/                        # Voice reference audio (gitignored)
-├── tools/
-│   ├── pyproject.toml                 # Poetry deps
-│   ├── Dockerfile                     # Multi-stage: base+ffmpeg / test / production
-│   ├── pipeline_runner/               # Python package
-│   │   ├── runner.py                  # Core pipeline engine (generic, from journalist)
-│   │   ├── config.py                  # PodcastSettings + PodcastConfig
-│   │   ├── cli.py                     # CLI entry point
-│   │   ├── scheduler.py              # Long-running scheduler service
-│   │   ├── utils/ffmpeg.py           # Shared ffmpeg helper
+├── podcast_renderer/                  # PACKAGE 1: Standalone rendering library
+│   ├── pyproject.toml                 # Own deps, publishable as a package
+│   ├── Dockerfile                     # Renderer-specific container
+│   ├── podcast_renderer/              # Python package
+│   │   ├── config.py                  # PodcastConfig (canonical location)
 │   │   ├── tts/                       # TTS engine abstraction
 │   │   │   ├── base.py               # TTSEngine protocol
 │   │   │   ├── mlx_audio_engine.py   # mlx-audio / Qwen3-TTS
 │   │   │   └── f5_tts_engine.py      # f5-tts-mlx
+│   │   ├── audio/                     # Audio processing (ffmpeg helpers)
+│   │   ├── llm/                       # LLM integration (MiniMax via Anthropic-compatible API)
+│   │   ├── transcription/             # mlx-whisper transcription
+│   │   └── content/                   # Content generation (scripts, show notes)
+│   └── tests/                         # pytest suite for renderer
+├── tools/
+│   ├── pyproject.toml                 # Deps (depends on podcast_renderer as path dep)
+│   ├── Dockerfile                     # Multi-stage: base+ffmpeg / test / production
+│   ├── pipeline_runner/               # PACKAGE 2: Pipeline orchestration
+│   │   ├── runner.py                  # Core pipeline engine (generic, from journalist)
+│   │   ├── config.py                  # Re-exports PodcastConfig from podcast_renderer
+│   │   ├── cli.py                     # CLI entry point
+│   │   ├── scheduler.py              # Long-running scheduler service
 │   │   ├── pipelines/                # Pre-built pipelines
 │   │   └── steps/                    # Composable pipeline steps
-│   └── tests/                        # pytest suite
+│   │       ├── iamq.py               # IAMQ announce step
+│   │       ├── handoff.py            # Librarian handoff step
+│   │       └── notify.py             # Notification step
+│   └── tests/                        # pytest suite for pipeline runner
 ├── spec/                              # Detailed specifications
 ├── .archgate/adrs/                    # Architecture Decision Records
 ├── .github/workflows/ci.yml          # CI pipeline
@@ -49,19 +63,23 @@ openclaw-podcast-agent/
 └── memory/                            # Agent memory (gitignored)
 ```
 
+**Package split:** `podcast_renderer` is a standalone Python package containing all rendering
+logic (TTS, audio, LLM, transcription, content). `pipeline_runner` handles orchestration
+(runner, CLI, scheduler, pipelines, steps) and depends on `podcast_renderer` as a path dependency.
+
 ## Two Audiences, Two Sets of Files
 
 | Audience | Files | Purpose |
 |----------|-------|---------|
 | **Podcaster Agent** | IDENTITY, SOUL, AGENTS, USER, TOOLS, HEARTBEAT, spec/CRON, spec/TASK, memory/ | Runtime behavior, identity, protocols |
-| **Developers / Claude Code** | CLAUDE, spec/*, .archgate/adrs/*, tools/, Dockerfile, docker-compose.yml, CI | Build, test, improve, deploy |
+| **Developers / Claude Code** | CLAUDE, spec/*, .archgate/adrs/*, tools/, podcast_renderer/, Dockerfiles, docker-compose.yml, CI | Build, test, improve, deploy |
 
 ## Key Architectural Decision: Hybrid Docker + Host
 
 MLX packages (mlx-audio, f5-tts-mlx, mlx-whisper) require Apple Silicon Metal and
 cannot run inside standard Docker containers. See ARCH-002 for the full rationale.
 
-**In Docker:** Pipeline engine, ffmpeg processing, Ollama calls, scheduling, IAMQ
+**In Docker:** Pipeline engine, ffmpeg processing, MiniMax LLM calls, scheduling, IAMQ sidecar
 **On host macOS:** TTS voice synthesis, mlx-whisper transcription
 
 The CLI detects the environment and routes accordingly.
@@ -78,8 +96,9 @@ See `.env.example` for the complete list. Key variables:
 | `LIBRARIAN_AGENT_WORKSPACE` | Librarian handoff directory |
 | `IAMQ_HTTP_URL` | IAMQ service URL |
 | `IAMQ_AGENT_ID` | Agent ID (default: podcast_agent) |
-| `OLLAMA_BASE_URL` | Ollama API URL |
-| `OLLAMA_MODEL` | LLM model for script generation |
+| `MINIMAX_API_KEY` | MiniMax API key (Anthropic-compatible API) |
+| `MINIMAX_BASE_URL` | MiniMax API base URL |
+| `MINIMAX_MODEL` | LLM model for script generation (default: MiniMax-M2.7) |
 | `TTS_ENGINE` | TTS engine override (mlx-audio or f5-tts-mlx) |
 
 ## Commands
@@ -106,8 +125,8 @@ docker compose run --rm --profile test pipeline-test
 ## Testing & CI
 
 - **Unit tests:** `pytest tests/ -v`
-- **Lint:** `ruff check pipeline_runner/ && ruff format --check pipeline_runner/`
-- **Type check:** `mypy pipeline_runner/`
+- **Lint:** `ruff check pipeline_runner/ podcast_renderer/ && ruff format --check pipeline_runner/ podcast_renderer/`
+- **Type check:** `mypy pipeline_runner/ podcast_renderer/`
 - **CI matrix:** Python 3.12, 3.13
 - **Docker build validation:** All profiles
 - **Secrets scan:** Blocks hardcoded credentials and local paths

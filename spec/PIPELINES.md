@@ -2,6 +2,11 @@
 
 The podcast agent uses a composable pipeline system ported from the journalist agent pattern. Pipelines are sequences of steps that execute in order, with each step deciding whether to run based on current state.
 
+**Package split:** Pipeline orchestration lives in `tools/pipeline_runner/` while rendering
+logic (TTS, audio, LLM, transcription, content) lives in `podcast_renderer/podcast_renderer/`.
+Steps import rendering functionality from `podcast_renderer` (e.g., `from podcast_renderer.tts import MLXAudioEngine`).
+Orchestration-only steps (IAMQ, handoff, notify) live in `pipeline_runner/steps/`.
+
 ## Step Protocol
 
 Every step implements this interface:
@@ -46,7 +51,7 @@ The pipeline:
 ## Pre-Built Pipelines
 
 ### Script Pipeline
-Generates a podcast script from topics using the local LLM (Ollama).
+Generates a podcast script from topics using MiniMax LLM (Anthropic-compatible API).
 
 ```bash
 docker compose exec scheduler pipeline generate-script --topics "AI news this week"
