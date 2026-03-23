@@ -55,6 +55,22 @@ services:
     working_dir: /app
     profiles: ["cli"]
 
+  # ── IAMQ Sidecar (inter-agent message queue) ─────────────────────
+  # Registers with the MQ, sends heartbeats, polls inbox, WebSocket push.
+  iamq:
+    image: openclaw-iamq-sidecar:latest
+    restart: unless-stopped
+    environment:
+      IAMQ_HTTP_URL: http://host.docker.internal:18790
+      IAMQ_WS_URL: ws://host.docker.internal:18793/ws
+      IAMQ_AGENT_ID: podcast_agent
+      IAMQ_AGENT_NAME: Podcaster
+      IAMQ_AGENT_EMOJI: "\U0001F3A7"
+      IAMQ_AGENT_DESC: "Podcast production — script generation, TTS synthesis, episode assembly, RSS publishing"
+      IAMQ_AGENT_CAPABILITIES: script_generation,tts_synthesis,episode_assembly,audio_processing,rss_publishing,transcription
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
   # ── Test runner ─────────────────────────────────────────────────
   #   docker compose run --rm pipeline-test
   pipeline-test:
