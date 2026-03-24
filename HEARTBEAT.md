@@ -48,12 +48,10 @@ Protocol: see `openclaw-inter-agent-message-queue/spec/PROTOCOL.md`.
 
 ## Report to User
 
-After completing all checks above, **send a summary to the user via your messaging channel** (Telegram through OpenClaw gateway). The user cannot see IAMQ messages.
-
-- If you processed production requests or episodes are in progress: summarize what happened.
-  Example: "Heartbeat: episode '[title]' in production — TTS at 80%. Should be ready in ~3 min."
-- If nothing happened: "No pending episodes. Standing by for production requests."
-- TTS failures, LLM API timeouts, audio errors: report IMMEDIATELY, don't wait for the heartbeat summary.
+Send a Telegram summary ONLY when there's something worth reporting:
+- Episodes in production or completed. Example: "Episode '[title]' ready — uploaded to feed."
+- TTS failures, LLM API timeouts, audio errors: report IMMEDIATELY.
+- Do NOT send a message if nothing happened. Silent heartbeats are fine.
 
 ## Rules
 

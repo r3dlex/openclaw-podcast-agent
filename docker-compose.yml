@@ -68,6 +68,8 @@ services:
       IAMQ_AGENT_EMOJI: "\U0001F3A7"
       IAMQ_AGENT_DESC: "Podcast production — script generation, TTS synthesis, episode assembly, RSS publishing"
       IAMQ_AGENT_CAPABILITIES: script_generation,tts_synthesis,episode_assembly,audio_processing,rss_publishing,transcription
+      IAMQ_HEARTBEAT_MS: "300000"
+      IAMQ_POLL_MS: "60000"
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
