@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.svg" alt="Podcast Agent logo" width="96" height="96">
+</p>
+
 # openclaw-podcast-agent
 
 Autonomous podcast production agent for the OpenClaw ecosystem. Generates podcast episodes from topics or scripts using Apple Silicon MLX-based TTS, with audio cleanup, transcription, and RSS distribution.
