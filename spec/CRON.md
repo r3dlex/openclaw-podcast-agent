@@ -33,3 +33,10 @@ No cron entry is needed in the pipeline runner for this.
 - The agent owns this file and keeps it current.
 - Add new recurring tasks here with schedule, description, and source.
 - For one-shot tasks, use `spec/TASK.md` instead.
+
+## References
+
+- [IAMQ Cron Subsystem](https://github.com/r3dlex/openclaw-inter-agent-message-queue/blob/main/spec/CRON.md) — how cron schedules are stored and fired
+- [IAMQ API — Cron endpoints](https://github.com/r3dlex/openclaw-inter-agent-message-queue/blob/main/spec/API.md#cron-scheduling)
+- [IamqSidecar.MqClient.register_cron/3](https://github.com/r3dlex/openclaw-inter-agent-message-queue/tree/main/sidecar) — Elixir sidecar helper
+- [openclaw-main-agent](https://github.com/r3dlex/openclaw-main-agent) — orchestrates cron-triggered pipelines

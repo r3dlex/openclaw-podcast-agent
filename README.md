@@ -65,6 +65,14 @@ See `CLAUDE.md` for the full developer guide and `spec/ARCHITECTURE.md` for syst
 - Apple Silicon Mac (for MLX TTS and transcription)
 - MiniMax API key (for script and show notes generation)
 
+## Related
+
+- [openclaw-inter-agent-message-queue](https://github.com/r3dlex/openclaw-inter-agent-message-queue) — IAMQ: message bus, agent registry, and cron scheduler
+  - [HTTP API reference](https://github.com/r3dlex/openclaw-inter-agent-message-queue/blob/main/spec/API.md)
+  - [Cron subsystem](https://github.com/r3dlex/openclaw-inter-agent-message-queue/blob/main/spec/CRON.md)
+  - [Sidecar client](https://github.com/r3dlex/openclaw-inter-agent-message-queue/tree/main/sidecar)
+- [openclaw-main-agent](https://github.com/r3dlex/openclaw-main-agent) — Cross-agent pipeline orchestrator
+
 ## License
 
 MIT
