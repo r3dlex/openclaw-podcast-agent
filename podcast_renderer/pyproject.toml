@@ -33,7 +33,7 @@ select = ["E", "F", "I", "N", "W", "UP", "B", "SIM", "RUF"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--strict-markers -v --tb=short --cov=podcast_renderer --cov-report=term-missing --cov-fail-under=20"
+addopts = "--strict-markers -v --tb=short --cov=podcast_renderer --cov-report=term-missing --cov-fail-under=90"
 
 [tool.mypy]
 python_version = "3.12"
