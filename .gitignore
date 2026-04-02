@@ -232,3 +232,17 @@ reports/
 
 # Agent inbox (handoff signals)
 inbox/
+
+# Erlang/Elixir artifacts
+erl_crash.dump
+*.beam
+*.ez
+_build/
+deps/
+cover/
+doc/
+.elixir_ls/
+.lexical/
+priv/plts/
+*.plt
+*.plt.hash
