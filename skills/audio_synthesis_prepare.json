@@ -1,0 +1,14 @@
+{
+  "name": "audio_synthesis_prepare",
+  "version": 1,
+  "quality_score": 0.5,
+  "description": "Prepare audio synthesis job for a text segment",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "text": {"type": "string", "description": "Text content to synthesize into audio"},
+      "voice": {"type": "string", "description": "Voice identifier to use for synthesis"}
+    },
+    "required": ["text"]
+  }
+}

@@ -21,6 +21,7 @@ services:
       - IAMQ_HTTP_URL=http://host.docker.internal:18790
       # Mounted path for librarian workspace (container-internal path)
       - LIBRARIAN_WORKSPACE_MOUNT=/app/librarian_workspace
+      - EMBEDDINGS_URL=http://host.docker.internal:18795
     volumes:
       - ./config:/app/config:ro
       - ./references:/app/references:ro
@@ -28,6 +29,9 @@ services:
       - ${DISTRIBUTION_OUTPUT_DIR:-./output}:/app/output:rw
       # Mount librarian workspace so handoff step can write signals
       - ${LIBRARIAN_AGENT_WORKSPACE:-.}:/app/librarian_workspace:rw
+      - ../skills-cli:/skills-cli:ro
+      - ../skills:/workspace/skills:rw
+      - ./skills:/agent/skills:rw
     working_dir: /app/tools
     command: ["scheduler"]
     restart: unless-stopped
